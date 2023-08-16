@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <title>Memory Game</title>
+  </head>
+  <body>
+    <div class="memory-game">
+      <header>
+        <h1>Spomin</h1>
+      </header>
+
+      <main>
+        <div id="win-message"></div>
+        <div class="game-board" id="game-board"></div>
+        <div id="timer">Time: 0 seconds</div>
+      </main>
+    </div>
+
+    <script>
+      const cardNames = [
+        "name1",
+        "name2",
+        "name3",
+        "name4",
+        "name5",
+        "name6",
+        "name7",
+        "name8",
+      ];
+      const doubledCardNames = cardNames.concat(cardNames);
+      const shuffledCardNames = shuffle(doubledCardNames);
+      let gameStarted = false;
+      var test;
+      function shuffle(arr) {
+        let currentIndex = arr.length,
+          randomIndex;
+
+        while (currentIndex !== 0) {
+          randomIndex = Math.floor(Math.random() * currentIndex);
+          currentIndex--;
+
+          [arr[currentIndex], arr[randomIndex]] = [
+            arr[randomIndex],
+            arr[currentIndex],
+          ];
+        }
+
+        return arr;
+      }
+
+      const cards = Array.from({ length: 16 }, (_, index) => ({
+        id: index + 1,
+        content: shuffledCardNames[index],
+        isFlipped: false,
+      }));
+
+      const gameBoard = document.getElementById("game-board");
+      const winMessage = document.getElementById("win-message");
+      const timerElement = document.getElementById("timer");
+
+      const flippedCards = [];
+      let isWon = false;
+
+      function handleClick(cardId) {
+        if(!gameStarted){//Recorded start of game. 
+          gameStarted = true;
+          gameStartTime = new Date().getTime();
+          timerUpdateInterval = setInterval(updateGameBoard, 1000); // Update timer every 1 second
+        }
+        if (flippedCards.length < 2) {
+          let clickedCard = cards.find((card) => card.id === cardId);
+          clickedCard.isFlipped = true;
+          clickedCard.textContent = clickedCard.content;
+          flippedCards.push(clickedCard);
+          if (flippedCards.length === 2) {
+            if (flippedCards[0].textContent === flippedCards[1].textContent) {
+              setTimeout(() => {
+                removeCards(flippedCards[0].id, flippedCards[1].id);
+                flippedCards.length = 0; // Clear the flippedCards array
+                updateGameBoard();
+                }, 500);
+            } 
+            else {
+              setTimeout(() => {
+                flippedCards.forEach((card) => {
+                  card.isFlipped = false;
+                  card.textContent = "?";
+                });
+                flippedCards.length = 0;
+                updateGameBoard();
+              }, 2000); // 2 seconds
+            }
+          }
+          updateGameBoard();
+        } else {
+        }
+      }
+
+      function removeCards(cardId1, cardId2) {
+        const index1 = cards.findIndex((card) => card.id === cardId1);
+        const index2 = cards.findIndex((card) => card.id === cardId2);
+
+        if (index1 !== -1) {
+          cards.splice(index1, 1);
+        }
+
+        if (index2 !== -1) {
+          cards.splice(index2 > index1 ? index2 - 1 : index2, 1);
+        }
+
+        if (cards.length === 0) {
+          isWon = true;
+          winMessage.textContent = "Zmaga!";
+          clearInterval(timerUpdateInterval);
+        }
+      }
+
+      function updateGameBoard() {
+        gameBoard.innerHTML = "";
+        cards.forEach((card) => {
+          const cardElement = document.createElement("div");
+          cardElement.className = "memory-card";
+          cardElement.id = card.id;
+          cardElement.textContent = card.isFlipped ? card.content : "?";
+          cardElement.addEventListener("click", () => handleClick(card.id));
+          gameBoard.appendChild(cardElement);
+        });
+
+        if (gameStarted && !isWon) {
+          const currentTime = new Date().getTime();
+          const elapsedSeconds = Math.floor((currentTime - gameStartTime) / 1000);
+          timerElement.textContent = `Time: ${elapsedSeconds} seconds`;
+        }
+      }
+
+      updateGameBoard();
+    </script>
+  </body>
+</html>
